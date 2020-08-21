@@ -2,6 +2,7 @@ require 'commander'
 require 'fastlane/version'
 
 require_relative 'download_screenshots'
+require_relative 'download_previews'
 require_relative 'options'
 require_relative 'module'
 require_relative 'generate_summary'
@@ -148,6 +149,22 @@ module Deliver
           containing = FastlaneCore::Helper.fastlane_enabled_folder_path
           path = options[:screenshots_path] || File.join(containing, 'screenshots')
           Deliver::DownloadScreenshots.run(options, path)
+        end
+      end
+
+      command :download_previews do |c|
+        c.syntax = 'fastlane deliver download_previews'
+        c.description = "Downloads all existing previews from App Store Connect and stores them in the previews folder"
+
+        FastlaneCore::CommanderGenerator.new.generate(deliverfile_options, command: c)
+
+        c.action do |args, options|
+          options = FastlaneCore::Configuration.create(deliverfile_options(skip_verification: true), options.__hash__)
+          options.load_configuration_file("Deliverfile")
+          Deliver::Runner.new(options, skip_version: true) # to login...
+          containing = FastlaneCore::Helper.fastlane_enabled_folder_path
+          path = options[:previews_path] || File.join(containing, 'previews')
+          Deliver::DownloadPreviews.run(options, path)
         end
       end
 

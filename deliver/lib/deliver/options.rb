@@ -110,6 +110,11 @@ module Deliver
                                      env_name: "DELIVER_SCREENSHOTS_PATH",
                                      description: "Path to the folder containing the screenshots",
                                      optional: true),
+        FastlaneCore::ConfigItem.new(key: :previews_path,
+                                     # short_option: '-',
+                                     env_name: "DELIVER_PREVIEWS_PATH",
+                                     description: "Path to the folder containing the previews",
+                                     optional: true),
 
         # skip
         FastlaneCore::ConfigItem.new(key: :skip_binary_upload,
@@ -120,6 +125,11 @@ module Deliver
         FastlaneCore::ConfigItem.new(key: :skip_screenshots,
                                      env_name: "DELIVER_SKIP_SCREENSHOTS",
                                      description: "Don't upload the screenshots",
+                                     is_string: false,
+                                     default_value: false),
+        FastlaneCore::ConfigItem.new(key: :skip_previews,
+                                     env_name: "DELIVER_SKIP_PREVIEWS",
+                                     description: "Don't upload the previews",
                                      is_string: false,
                                      default_value: false),
         FastlaneCore::ConfigItem.new(key: :skip_metadata,

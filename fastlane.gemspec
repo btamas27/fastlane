@@ -79,6 +79,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency('faraday', '~> 1.0') # The faraday gem is used for deploygate, hockey and testfairy actions.
   spec.add_dependency('faraday_middleware', '~> 1.0') # Same as faraday
   spec.add_dependency('fastimage', '>= 2.1.0', '< 3.0.0') # fetch the image sizes from the screenshots
+  spec.add_dependency('ffmpeg', '~> 0.2.5') # download previews from App Store Connect
   spec.add_dependency('gh_inspector', '>= 1.1.2', '< 2.0.0') # search for issues on GitHub when something goes wrong
   spec.add_dependency('highline', '>= 1.7.2', '< 2.0.0') # user inputs (e.g. passwords)
   spec.add_dependency('json', '< 3.0.0') # Because sometimes it's just not installed

@@ -10,6 +10,7 @@ require_relative 'submit_for_review'
 require_relative 'upload_price_tier'
 require_relative 'upload_metadata'
 require_relative 'upload_screenshots'
+require_relative 'upload_previews'
 require_relative 'detect_values'
 
 module Deliver
@@ -41,15 +42,16 @@ module Deliver
 
       upload_metadata
 
-      has_binary = (options[:ipa] || options[:pkg])
-      if !options[:skip_binary_upload] && !options[:build_number] && has_binary
-        upload_binary
-      end
-
-      UI.success("Finished the upload to App Store Connect") unless options[:skip_binary_upload]
-
-      precheck_success = precheck_app
-      submit_for_review if options[:submit_for_review] && precheck_success
+      # TODO UNCOMMENT
+      # has_binary = (options[:ipa] || options[:pkg])
+      # if !options[:skip_binary_upload] && !options[:build_number] && has_binary
+      #   upload_binary
+      # end
+      #
+      # UI.success("Finished the upload to App Store Connect") unless options[:skip_binary_upload]
+      #
+      # precheck_success = precheck_app
+      # submit_for_review if options[:submit_for_review] && precheck_success
     end
 
     # Make sure we pass precheck before uploading
@@ -105,23 +107,29 @@ module Deliver
 
     # Upload all metadata, screenshots, pricing information, etc. to App Store Connect
     def upload_metadata
-      upload_metadata = UploadMetadata.new
-      upload_screenshots = UploadScreenshots.new
+      upload_previews = UploadPreviews.new
 
-      # First, collect all the things for the HTML Report
-      screenshots = upload_screenshots.collect_screenshots(options)
-      upload_metadata.load_from_filesystem(options)
+      previews = upload_previews.collect_previews(options)
+      upload_previews.upload(options, previews)
 
-      # Assign "default" values to all languages
-      upload_metadata.assign_defaults(options)
-
-      # Validate
-      validate_html(screenshots)
-
-      # Commit
-      upload_metadata.upload(options)
-      upload_screenshots.upload(options, screenshots)
-      UploadPriceTier.new.upload(options)
+      # TODO UNCOMMENT
+      # upload_metadata = UploadMetadata.new
+      # upload_screenshots = UploadScreenshots.new
+      #
+      # # First, collect all the things for the HTML Report
+      # screenshots = upload_screenshots.collect_screenshots(options)
+      # upload_metadata.load_from_filesystem(options)
+      #
+      # # Assign "default" values to all languages
+      # upload_metadata.assign_defaults(options)
+      #
+      # # Validate
+      # validate_html(screenshots)
+      #
+      # # Commit
+      # upload_metadata.upload(options)
+      # upload_screenshots.upload(options, screenshots)
+      # UploadPriceTier.new.upload(options)
     end
 
     # Upload the binary to App Store Connect
