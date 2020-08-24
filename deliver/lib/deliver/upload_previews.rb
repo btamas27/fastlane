@@ -231,11 +231,11 @@ module Deliver
       Loader.language_folders(path, ignore_validation).each do |lng_folder|
         language = File.basename(lng_folder)
 
-        # Check to see if we need to traverse multiple platforms or just a single platform
-        if language == Loader::APPLE_TV_DIR_NAME || language == Loader::IMESSAGE_DIR_NAME
-          previews.concat(collect_previews_for_languages(File.join(path, language), ignore_validation))
-          next
-        end
+        # # Check to see if we need to traverse multiple platforms or just a single platform
+        # if language == Loader::APPLE_TV_DIR_NAME || language == Loader::IMESSAGE_DIR_NAME
+        #   previews.concat(collect_previews_for_languages(File.join(path, language), ignore_validation))
+        #   next
+        # end
 
         files = Dir.glob(File.join(lng_folder, "*.#{extensions}"), File::FNM_CASEFOLD).sort
         next if files.count == 0
@@ -253,13 +253,15 @@ module Deliver
         language = available_languages[language_dir_name.downcase]
 
         files.each do |file_path|
-          is_framed = file_path.downcase.include?("_framed.")
-          is_watch = file_path.downcase.include?("watch")
-
-          if framed_previews_found && !is_framed && !is_watch
-            UI.important("🏃 Skipping preview file: #{file_path}")
-            next
-          end
+          # is_framed = file_path.downcase.include?("_framed.")
+          # is_watch = file_path.downcase.include?("watch")
+          #
+          # if framed_previews_found && !is_framed && !is_watch
+          #   UI.important("🏃 Skipping preview file: #{file_path}")
+          #   next
+          # end
+          #
+          puts(file_path, language)
 
           previews << AppPreview.new(file_path, language)
         end

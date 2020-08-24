@@ -1,5 +1,8 @@
 require_relative 'module'
+
 require 'spaceship/connect_api/models/app_preview_set'
+require 'fastlane/helper/sh_helper'
+require 'ffprobe'
 
 module Deliver
   # AppPreview represents one preview for one specific locale
@@ -46,7 +49,7 @@ module Deliver
     def initialize(path, language, screen_size = nil)
       self.path = path
       self.language = language
-      # screen_size ||= self.calcualte_screen_size(path)
+      screen_size ||= self.class.calculate_screen_size(path)
 
       self.screen_size = screen_size
 
@@ -66,7 +69,7 @@ module Deliver
         ScreenSize::IOS_IPAD_11 => Spaceship::ConnectAPI::AppPreviewSet::PreviewType::IPAD_PRO_3GEN_11,
         ScreenSize::IOS_IPAD_PRO => Spaceship::ConnectAPI::AppPreviewSet::PreviewType::IPAD_PRO_129,
         ScreenSize::IOS_IPAD_PRO_12_9 => Spaceship::ConnectAPI::AppPreviewSet::PreviewType::IPAD_PRO_3GEN_129,
-        ScreenSize::MAC => Spaceship::ConnectAPI::AppScreenshotSet::AppPreviewSet::DESKTOP,
+        ScreenSize::MAC => Spaceship::ConnectAPI::AppPreviewSet::PreviewType::DESKTOP
       }
       return matching[self.screen_size]
     end
@@ -78,16 +81,13 @@ module Deliver
         ScreenSize::IOS_47 => "iPhone 6", # also 7 & 8
         ScreenSize::IOS_55 => "iPhone 6 Plus", # also 7 Plus & 8 Plus
         ScreenSize::IOS_58 => "iPhone XS",
-        ScreenSize::IOS_61 => "iPhone XR",
         ScreenSize::IOS_65 => "iPhone XS Max",
         ScreenSize::IOS_IPAD => "iPad",
         ScreenSize::IOS_IPAD_10_5 => "iPad 10.5",
         ScreenSize::IOS_IPAD_11 => "iPad 11",
         ScreenSize::IOS_IPAD_PRO => "iPad Pro",
         ScreenSize::IOS_IPAD_PRO_12_9 => "iPad Pro (12.9-inch) (3rd generation)",
-        ScreenSize::MAC => "Mac",
-        ScreenSize::IOS_APPLE_WATCH => "Watch",
-        ScreenSize::IOS_APPLE_WATCH_SERIES4 => "Watch Series4",
+        ScreenSize::MAC => "Mac"
       }
       return matching[self.screen_size]
     end
@@ -101,7 +101,7 @@ module Deliver
     # reference: https://help.apple.com/app-store-connect/#/dev4e413fcb8
     def self.devices
       # This list does not include iPad Pro 12.9-inch (3rd generation)
-      # because it has same resoluation as IOS_IPAD_PRO and will clobber
+      # because it has same resolution as IOS_IPAD_PRO and will clobber
       return {
         # Same as IPHONE_58
         ScreenSize::IOS_65 => [
@@ -122,7 +122,9 @@ module Deliver
           [900, 1200],
           [1200, 900],
           [1200, 1600],
-          [1600, 1200]
+          [1600, 1200],
+          [1440, 1080],
+          [1080, 1440]
         ],
         ScreenSize::MAC => [
           [1280, 800],
@@ -134,24 +136,24 @@ module Deliver
     end
 
     def self.resolve_device_conflict_if_needed(screen_size, filename)
+      is_3rd_gen = [
+        "iPad Pro (12.9-inch) (3rd generation)", # default simulator name has this
+        "iPad Pro (12.9-inch) (4th generation)", # default simulator name has this
+        "ipadPro129", # downloaded screenshots name has this
+        "IPAD_PRO_3GEN_129"
+      ].any? { |key| filename.include?(key) }
+      if is_3rd_gen
+        if screen_size == ScreenSize::IOS_IPAD_PRO
+          return ScreenSize::IOS_IPAD_PRO_12_9
+        elsif screen_size == ScreenSize::IOS_IPAD_PRO_MESSAGES
+          return ScreenSize::IOS_IPAD_PRO_12_9_MESSAGES
+        end
+      end
       screen_size
-      # is_3rd_gen = [
-      #   "iPad Pro (12.9-inch) (3rd generation)", # default simulator name has this
-      #   "iPad Pro (12.9-inch) (4th generation)", # default simulator name has this
-      #   "ipadPro129" # downloaded screenshots name has this
-      # ].any? { |key| filename.include?(key) }
-      # if is_3rd_gen
-      #   if screen_size == ScreenSize::IOS_IPAD_PRO
-      #     return ScreenSize::IOS_IPAD_PRO_12_9
-      #   elsif screen_size == ScreenSize::IOS_IPAD_PRO_MESSAGES
-      #     return ScreenSize::IOS_IPAD_PRO_12_9_MESSAGES
-      #   end
-      # end
-      # screen_size
     end
 
     def self.calculate_screen_size(path)
-      size = FastImage.size(path)
+      size = Fastlane::Actions.sh("ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=s=x:p=0 #{path}", log: false).split("x").map { |s| s.to_i }
 
       UI.user_error!("Could not find or parse file at path '#{path}'") if size.nil? || size.count == 0
 
@@ -166,7 +168,7 @@ module Deliver
 
       UI.user_error!("Unsupported screen size #{size} for path '#{path}'")
     end
-
-    ScreenSize = AppPreview::ScreenSize
   end
+
+  ScreenSize = AppPreview::ScreenSize
 end
