@@ -1,3 +1,4 @@
+require 'deliver/device_helper'
 require 'deliver/app_screenshot'
 require 'deliver/setup'
 
@@ -12,7 +13,7 @@ describe Deliver::AppScreenshot do
     end
   end
 
-  ScreenSize = Deliver::AppScreenshot::ScreenSize
+  ScreenSize = Deliver::DeviceHelper::ScreenSize
 
   describe "#initialize" do
     context "when filename doesn't contain 'iPad Pro (3rd generation)' or 'iPad Pro (4th generation)'" do

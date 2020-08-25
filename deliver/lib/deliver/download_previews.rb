@@ -8,10 +8,6 @@ require 'fastlane/helper/sh_helper'
 
 module Deliver
   class DownloadPreviews
-    DownloadPreviewsJob = Struct.new(:app_preview, :localization, :app_preview_set)
-
-    NUMBER_OF_THREADS = Helper.test? ? 1 : [ENV.fetch("DELIVER_NUMBER_OF_THREADS", 10).to_i, 10].min
-
     def self.run(options, path)
       UI.message("Downloading all existing previews...")
       download(options, path)
@@ -34,53 +30,24 @@ module Deliver
       end
 
       localizations = version.get_app_store_version_localizations.select { |localization| localization.locale.eql?('en-US') }
-      # Helper.show_loading_indicator("Downloading preview...")
       download_previews(localizations, folder_path)
-      # Helper.hide_loading_indicator
     end
 
     def self.download_previews(localizations, folder_path)
-      tries = -1
-
-      worker = QueueWorker.new(NUMBER_OF_THREADS) do |job|
-        start_time = Time.now
-        target = "#{job.localization.locale} #{job.app_preview_set.display_type} #{job.app_preview.id}"
-        begin
-          UI.verbose("Downloading '#{target}'")
-          job.app_preview.download
-          UI.message("Downloaded '#{target}' -  (#{Time.now - start_time} secs)")
-        rescue => error
-          UI.error("Failed to download preview #{target} - (#{Time.now - start_time} secs)")
-          UI.error(error.message)
-        end
-      end
-
       localizations.each do |localization|
         language = localization.locale
         preview_sets = localization.get_app_preview_sets
         preview_sets.each do |preview_set|
           preview_set.app_previews.each_with_index do |preview, index|
-
-            obj = {}
-            obj['fileName'] = preview.fileName
-            obj['fileSize'] = preview.fileSize
-            obj['sourceFileChecksum'] = preview.sourceFileChecksum
-            obj['previewFrameTimeCode'] = preview.previewFrameTimeCode
-            obj['mimeType'] = preview.mimeType
-            obj['videoUrl'] = preview.videoUrl
-            obj['previewImage'] = preview.previewImage
-            obj['assetDeliveryState'] = preview.assetDeliveryState
-
-
             file_name = [index, preview_set.preview_type, index].join("_")
-            json_file_name = file_name + ".json"
             original_file_extension = File.extname(preview.file_name).strip.downcase[1..-1]
             file_name += "." + original_file_extension
 
             url = preview.video_url
             next if url.nil?
 
-            UI.message("Downloading existing preview '#{file_name}' for language '#{language}'")
+            # UI.message("Downloading existing preview '#{file_name}' for language '#{language}'")
+            Helper.show_loading_indicator("Downloading existing preview '#{file_name}' for language '#{language}'")
 
             containing_folder = File.join(folder_path, language)
             begin
@@ -90,15 +57,11 @@ module Deliver
             end
 
             path = File.join(containing_folder, file_name)
-            json_path = File.join(containing_folder, json_file_name)
-            File.write(json_path, JSON.pretty_generate(obj))
 
-            Fastlane::Actions.sh("ffmpeg -hide_banner -loglevel panic -i #{url} -c copy #{path}")
+            Fastlane::Actions.sh("ffmpeg -i #{url} -c copy #{path}", log: false)
+            Helper.hide_loading_indicator
           end
         end
-
-        worker.start
-
       end
     end
   end

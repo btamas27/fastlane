@@ -129,7 +129,7 @@ module Deliver
       number_of_previews = 0
       iterator = AppPreviewIterator.new(localizations)
       iterator.each_local_preview(previews_per_language) do |localization, app_preview_set, preview, index|
-        if index >= 10
+        if index >= 3
           UI.error("Too many previews found for device '#{preview.device_type}' in '#{preview.language}', skipping this one (#{preview.path})")
           next
         end
