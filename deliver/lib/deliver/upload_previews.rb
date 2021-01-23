@@ -253,16 +253,6 @@ module Deliver
         language = available_languages[language_dir_name.downcase]
 
         files.each do |file_path|
-          # is_framed = file_path.downcase.include?("_framed.")
-          # is_watch = file_path.downcase.include?("watch")
-          #
-          # if framed_previews_found && !is_framed && !is_watch
-          #   UI.important("🏃 Skipping preview file: #{file_path}")
-          #   next
-          # end
-          #
-          puts(file_path, language)
-
           previews << AppPreview.new(file_path, language)
         end
       end

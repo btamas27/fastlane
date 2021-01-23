@@ -111,7 +111,7 @@ module Deliver
                                      description: "Path to the folder containing the screenshots",
                                      optional: true),
         FastlaneCore::ConfigItem.new(key: :previews_path,
-                                     # short_option: '-',
+                                     # short_option: '-h',
                                      env_name: "DELIVER_PREVIEWS_PATH",
                                      description: "Path to the folder containing the previews",
                                      optional: true),

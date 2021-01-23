@@ -1,4 +1,5 @@
 require 'ffprobe'
+require 'shellwords'
 
 require_relative 'module'
 require_relative 'device_helper'
@@ -27,7 +28,7 @@ module Deliver
     end
 
     def is_valid?
-      return false unless ["mov", "m4v", "mp4"].include?(self.path.split(".").last)
+      return false unless %w(mov m4v mp4).include?(self.path.split(".").last)
 
       return self.screen_size == self.class.calculate_screen_size(self.path)
     end
@@ -113,7 +114,7 @@ module Deliver
       is_ipad_3rd_gen = [
         "iPad Pro (12.9-inch) (3rd generation)", # default simulator name has this
         "iPad Pro (12.9-inch) (4th generation)", # default simulator name has this
-        "IPAD_PRO_3GEN_129"
+        "IOS_IPAD_PRO_3GEN_129"
       ].any? { |key| filename.include?(key) }
       if is_ipad_3rd_gen
         if screen_size == ScreenSize::IOS_IPAD_PRO
@@ -143,18 +144,18 @@ module Deliver
 
       is_ipad_9_7 = [
         "iPad Pro (9.7-inch)", # default simulator name has this
-        "IOS_IPAD"
+        "IOS_IPAD_9_7"
       ].any? { |key| filename.include?(key) }
       if is_ipad_9_7
         if screen_size == ScreenSize::IOS_IPAD_PRO
-          return ScreenSize::IOS_IPAD
+          result = ScreenSize::IOS_IPAD          
         end
       end
       screen_size
     end
 
     def self.calculate_screen_size(path)
-      size = Fastlane::Actions.sh("ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=s=x:p=0 #{path}", log: false).split("x").map { |s| s.to_i }
+      size = Fastlane::Actions.sh("ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=s=x:p=0 #{Shellwords.shellescape(path)}", log: false).split("x").map { |s| s.to_i }
 
       UI.user_error!("Could not find or parse file at path '#{path}'") if size.nil? || size.count == 0
 
